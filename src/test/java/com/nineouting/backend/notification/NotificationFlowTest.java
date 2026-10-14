@@ -11,16 +11,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import com.nineouting.backend.common.client.UserClient;
+import com.nineouting.backend.common.client.UserSummary;
 import com.nineouting.backend.common.event.EventEnvelope;
 import com.nineouting.backend.common.event.meeting.MeetingCancelled;
 import com.nineouting.backend.common.event.meeting.MeetingCreated;
 import com.nineouting.backend.common.event.meeting.MeetingUpdated;
+import com.nineouting.backend.common.event.minutes.MinutesConfirmed;
+import com.nineouting.backend.common.event.minutes.MinutesReviewRequested;
 import com.nineouting.backend.common.event.user.EmailVerificationRequested;
 import com.nineouting.backend.common.event.user.PasswordResetRequested;
 import com.nineouting.backend.common.event.workspace.MemberJoinApproved;
 import com.nineouting.backend.common.event.workspace.MemberJoinRequested;
-import com.nineouting.backend.notification.client.UserClient;
-import com.nineouting.backend.notification.client.UserSummary;
 import com.nineouting.backend.notification.domain.MailKind;
 import com.nineouting.backend.notification.repository.OutgoingMailRepository;
 import java.time.Duration;
@@ -193,6 +195,28 @@ class NotificationFlowTest {
                 .andExpect(jsonPath("$.data.items[*].type").value(containsInAnyOrder("MEETING_CANCELLED", "MEETING_INVITED")));
         assertThat(unreadCount(removed)).isEqualTo(1);
         assertThat(unreadCount(owner)).isZero();
+    }
+
+    @Test
+    void 회의록_검토_요청과_확정을_알리고_확정_메일을_기록한다() throws Exception {
+        Long writer = NEXT_ID.incrementAndGet();
+        Long reviewer = NEXT_ID.incrementAndGet();
+
+        publish(MinutesReviewRequested.TOPIC, MinutesReviewRequested.TYPE,
+                new MinutesReviewRequested(41L, 31L, 3L, "주간 회의", writer, List.of(reviewer)));
+        publish(MinutesConfirmed.TOPIC, MinutesConfirmed.TYPE,
+                new MinutesConfirmed(41L, 31L, 3L, 4L, "주간 회의", List.of(writer, reviewer), LocalDateTime.now()));
+
+        await(() -> unreadCount(reviewer) == 2 && unreadCount(writer) == 1);
+        call(reviewer, get("/api/notifications"))
+                .andExpect(jsonPath("$.data.items[*].type").value(containsInAnyOrder("MINUTES_REVIEW_REQUESTED", "MINUTES_CONFIRMED")))
+                .andExpect(jsonPath("$.data.items[?(@.type == 'MINUTES_CONFIRMED')].message")
+                        .value(contains("'주간 회의' 회의록이 확정되었습니다")))
+                .andExpect(jsonPath("$.data.items[*].targetId").value(contains(41, 41)));
+        assertThat(outgoingMailRepository.findAll())
+                .filteredOn(mail -> mail.getKind() == MailKind.MINUTES_CONFIRMED)
+                .extracting("toEmail")
+                .contains("user" + writer + "@example.com", "user" + reviewer + "@example.com");
     }
 
     @Test

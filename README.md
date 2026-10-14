@@ -34,6 +34,8 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 | `workspace.member-join-requested` | 관리자에게 참여 요청 알림 |
 | `workspace.member-join-approved` | 요청자에게 승인 알림 |
 | `meeting.created` · `meeting.updated` · `meeting.cancelled` | 참석자에게 회의 초대·변경·취소 알림 (만든 사람 제외) |
+| `minutes.review-requested` | 검토할 참석자에게 검토 요청 알림 |
+| `minutes.confirmed` | 참석자 전원에게 확정 알림 + 보낼 메일 기록 |
 | `user.email-verification-requested` | 보낼 메일 기록 (인증 코드) |
 | `user.password-reset-requested` | 보낼 메일 기록 (재설정 링크) |
 
@@ -52,4 +54,4 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 | `DB_USERNAME` / `DB_PASSWORD` | `notification_service` | |
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | |
 | `JWT_JWKS_URI` | `http://localhost:8081/.well-known/jwks.json` | access 토큰 검증 공개키 |
-| `USER_SERVICE_URL` | `http://localhost:8081` | 알림 문구의 사용자 이름 조회 |
+| `USER_SERVICE_URL` | `http://localhost:8081` | 알림 문구의 사용자 이름·메일 주소 조회 (공통 모듈 `client-common`) |

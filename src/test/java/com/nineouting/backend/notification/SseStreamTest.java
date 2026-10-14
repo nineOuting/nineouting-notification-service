@@ -2,9 +2,9 @@ package com.nineouting.backend.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.nineouting.backend.common.client.UserClient;
 import com.nineouting.backend.common.event.EventEnvelope;
 import com.nineouting.backend.common.event.workspace.MemberJoinApproved;
-import com.nineouting.backend.notification.client.UserClient;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
