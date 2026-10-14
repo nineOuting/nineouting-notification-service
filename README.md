@@ -33,6 +33,7 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 |------|------|
 | `workspace.member-join-requested` | 관리자에게 참여 요청 알림 |
 | `workspace.member-join-approved` | 요청자에게 승인 알림 |
+| `meeting.created` · `meeting.updated` · `meeting.cancelled` | 참석자에게 회의 초대·변경·취소 알림 (만든 사람 제외) |
 | `user.email-verification-requested` | 보낼 메일 기록 (인증 코드) |
 | `user.password-reset-requested` | 보낼 메일 기록 (재설정 링크) |
 
