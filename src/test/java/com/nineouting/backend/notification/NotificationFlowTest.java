@@ -1,6 +1,8 @@
 package com.nineouting.backend.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -10,6 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import com.nineouting.backend.common.event.EventEnvelope;
+import com.nineouting.backend.common.event.meeting.MeetingCancelled;
+import com.nineouting.backend.common.event.meeting.MeetingCreated;
+import com.nineouting.backend.common.event.meeting.MeetingUpdated;
 import com.nineouting.backend.common.event.user.EmailVerificationRequested;
 import com.nineouting.backend.common.event.user.PasswordResetRequested;
 import com.nineouting.backend.common.event.workspace.MemberJoinApproved;
@@ -20,6 +25,8 @@ import com.nineouting.backend.notification.domain.MailKind;
 import com.nineouting.backend.notification.repository.OutgoingMailRepository;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
@@ -159,6 +166,33 @@ class NotificationFlowTest {
                 .containsExactlyInAnyOrder(
                         org.assertj.core.groups.Tuple.tuple(MailKind.EMAIL_VERIFICATION, "{\"code\":\"123456\"}", "PENDING"),
                         org.assertj.core.groups.Tuple.tuple(MailKind.PASSWORD_RESET, "{\"resetLink\":\"http://front/reset?token=t\"}", "PENDING"));
+    }
+
+    @Test
+    void 회의_초대_변경_취소를_만든_사람을_빼고_알린다() throws Exception {
+        Long owner = NEXT_ID.incrementAndGet();
+        Long stays = NEXT_ID.incrementAndGet();
+        Long added = NEXT_ID.incrementAndGet();
+        Long removed = NEXT_ID.incrementAndGet();
+        LocalDateTime startAt = LocalDateTime.of(2026, 10, 20, 14, 0);
+
+        publish(MeetingCreated.TOPIC, MeetingCreated.TYPE,
+                new MeetingCreated(31L, 3L, 4L, "주간 회의", startAt, owner, List.of(owner, stays, removed)));
+        publish(MeetingUpdated.TOPIC, MeetingUpdated.TYPE, new MeetingUpdated(31L, 3L, 4L, "주간 회의", startAt, owner,
+                List.of(owner, stays, added), List.of(added), List.of(removed)));
+        publish(MeetingCancelled.TOPIC, MeetingCancelled.TYPE,
+                new MeetingCancelled(31L, 3L, 4L, "주간 회의", startAt, owner, List.of(owner, stays, added)));
+
+        await(() -> unreadCount(stays) == 3 && unreadCount(added) == 2);
+        call(stays, get("/api/notifications"))
+                .andExpect(jsonPath("$.data.items[*].type").value(containsInAnyOrder("MEETING_CANCELLED", "MEETING_UPDATED", "MEETING_INVITED")))
+                .andExpect(jsonPath("$.data.items[?(@.type == 'MEETING_INVITED')].message")
+                        .value(contains("'주간 회의' 회의에 초대되었습니다 (10월 20일 14:00)")))
+                .andExpect(jsonPath("$.data.items[*].targetId").value(contains(31, 31, 31)));
+        call(added, get("/api/notifications"))
+                .andExpect(jsonPath("$.data.items[*].type").value(containsInAnyOrder("MEETING_CANCELLED", "MEETING_INVITED")));
+        assertThat(unreadCount(removed)).isEqualTo(1);
+        assertThat(unreadCount(owner)).isZero();
     }
 
     @Test
