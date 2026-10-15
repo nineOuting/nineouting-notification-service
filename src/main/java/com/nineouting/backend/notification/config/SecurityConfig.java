@@ -1,5 +1,6 @@
 package com.nineouting.backend.notification.config;
 
+import com.nineouting.backend.common.apidocs.ApiDocsPaths;
 import com.nineouting.backend.common.security.handler.JsonAccessDeniedHandler;
 import com.nineouting.backend.common.security.handler.JsonAuthenticationEntryPoint;
 import com.nineouting.backend.common.security.jwt.JwtAuthenticationFilter;
@@ -33,6 +34,7 @@ public class SecurityConfig {
                         // SSE 연결이 끝날 때의 비동기·에러 디스패치에는 토큰이 없다. 연결할 때 이미 검사했다
                         .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers(ApiDocsPaths.PUBLIC).permitAll()   // API 문서 (Swagger UI)
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(e -> e.authenticationEntryPoint(entryPoint).accessDeniedHandler(accessDeniedHandler))
