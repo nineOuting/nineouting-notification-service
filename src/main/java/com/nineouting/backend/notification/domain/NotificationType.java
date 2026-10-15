@@ -8,9 +8,9 @@ public enum NotificationType {
     MEMBER_JOIN_APPROVED,
     /** 참석자에게: 회의 초대 (REQ-058). 수정으로 새로 추가된 사람도 받는다. targetId = 회의 ID */
     MEETING_INVITED,
-    /** 참석자에게: 회의 정보 변경 (REQ-115). targetId = 회의 ID */
+    /** 참석자에게: 회의 정보 변경 (REQ-116). targetId = 회의 ID */
     MEETING_UPDATED,
-    /** 참석자에게: 회의 취소 (REQ-112). targetId = 회의 ID */
+    /** 참석자에게: 회의 취소 (REQ-113). targetId = 회의 ID */
     MEETING_CANCELLED,
     /** 검토할 참석자에게: 회의록 검토 요청 (REQ-095). targetId = 회의록 ID */
     MINUTES_REVIEW_REQUESTED,
