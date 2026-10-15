@@ -11,5 +11,9 @@ public enum NotificationType {
     /** 참석자에게: 회의 정보 변경 (REQ-115). targetId = 회의 ID */
     MEETING_UPDATED,
     /** 참석자에게: 회의 취소 (REQ-112). targetId = 회의 ID */
-    MEETING_CANCELLED
+    MEETING_CANCELLED,
+    /** 검토할 참석자에게: 회의록 검토 요청 (REQ-095). targetId = 회의록 ID */
+    MINUTES_REVIEW_REQUESTED,
+    /** 참석자 전원에게: 회의록 확정 (REQ-100). targetId = 회의록 ID */
+    MINUTES_CONFIRMED
 }

@@ -1,10 +1,10 @@
 package com.nineouting.backend.notification.handler;
 
+import com.nineouting.backend.common.client.UserClient;
+import com.nineouting.backend.common.client.UserSummary;
 import com.nineouting.backend.common.event.workspace.MemberJoinRequested;
 import com.nineouting.backend.common.inbox.InboxHandler;
 import com.nineouting.backend.common.inbox.InboxMessage;
-import com.nineouting.backend.notification.client.UserClient;
-import com.nineouting.backend.notification.client.UserSummary;
 import com.nineouting.backend.notification.domain.NotificationType;
 import com.nineouting.backend.notification.service.NotificationService;
 import java.util.List;
