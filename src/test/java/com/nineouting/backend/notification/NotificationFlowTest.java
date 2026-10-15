@@ -24,6 +24,7 @@ import com.nineouting.backend.common.event.user.PasswordResetRequested;
 import com.nineouting.backend.common.event.workspace.MemberJoinApproved;
 import com.nineouting.backend.common.event.workspace.MemberJoinRequested;
 import com.nineouting.backend.notification.domain.MailKind;
+import com.nineouting.backend.notification.domain.OutgoingMail;
 import com.nineouting.backend.notification.repository.OutgoingMailRepository;
 import java.time.Duration;
 import java.time.Instant;
@@ -68,6 +69,9 @@ class NotificationFlowTest {
 
     @Autowired
     OutgoingMailRepository outgoingMailRepository;
+
+    @Autowired
+    MailpitClient mailpit;
 
     @MockitoBean
     UserClient userClient;
@@ -156,18 +160,22 @@ class NotificationFlowTest {
     }
 
     @Test
-    void 메일_요청은_보낼_메일로_기록한다() throws Exception {
+    void 메일_요청은_기록한_뒤_실제로_보낸다() throws Exception {
         String email = "mail-" + NEXT_ID.incrementAndGet() + "@example.com";
 
         publish(EmailVerificationRequested.TOPIC, EmailVerificationRequested.TYPE, new EmailVerificationRequested(email, "123456"));
         publish(PasswordResetRequested.TOPIC, PasswordResetRequested.TYPE, new PasswordResetRequested(email, "http://front/reset?token=t"));
 
-        await(() -> outgoingMailRepository.findAll().stream().filter(mail -> mail.getToEmail().equals(email)).count() == 2);
+        await(() -> mailpit.textsTo(email).size() == 2);
+        assertThat(mailpit.textsTo(email))
+                .anySatisfy(text -> assertThat(text).contains("인증 코드: 123456"))
+                .anySatisfy(text -> assertThat(text).contains("http://front/reset?token=t"));
+        await(() -> outgoingMailRepository.findAll().stream()
+                .filter(mail -> mail.getToEmail().equals(email))
+                .allMatch(mail -> OutgoingMail.STATUS_SENT.equals(mail.getStatus())));
         assertThat(outgoingMailRepository.findAll()).filteredOn(mail -> mail.getToEmail().equals(email))
-                .extracting("kind", "params", "status")
-                .containsExactlyInAnyOrder(
-                        org.assertj.core.groups.Tuple.tuple(MailKind.EMAIL_VERIFICATION, "{\"code\":\"123456\"}", "PENDING"),
-                        org.assertj.core.groups.Tuple.tuple(MailKind.PASSWORD_RESET, "{\"resetLink\":\"http://front/reset?token=t\"}", "PENDING"));
+                .extracting("kind")
+                .containsExactlyInAnyOrder(MailKind.EMAIL_VERIFICATION, MailKind.PASSWORD_RESET);
     }
 
     @Test
@@ -217,6 +225,8 @@ class NotificationFlowTest {
                 .filteredOn(mail -> mail.getKind() == MailKind.MINUTES_CONFIRMED)
                 .extracting("toEmail")
                 .contains("user" + writer + "@example.com", "user" + reviewer + "@example.com");
+        await(() -> mailpit.subjectsTo("user" + reviewer + "@example.com").contains("[AI 회의 어시스턴트] '주간 회의' 회의록이 확정되었습니다"));
+        assertThat(mailpit.textsTo("user" + reviewer + "@example.com")).anySatisfy(text -> assertThat(text).contains("/minutes/41"));
     }
 
     @Test

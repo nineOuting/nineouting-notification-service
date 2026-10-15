@@ -5,14 +5,14 @@
 - 설계: [nineouting-docs/docs/services/notification-service.md](https://github.com/nineOuting/nineouting-docs/blob/main/docs/services/notification-service.md)
 - 포트: `8085`
 - 이벤트는 공통 모듈 `inbox`로 받는다 (DB에 먼저 저장 → 처리, 중복 제거·재시도)
-- 메일 실제 발송은 추후 개발 (`outgoing_mails`에 쌓기만 한다)
+- 메일은 `outgoing_mails`에 기록한 뒤 SMTP로 보낸다 (개발: Mailpit, 운영: AWS SES SMTP). 실패하면 간격을 늘려 다시 보내고 10번 실패하면 `FAILED`로 남긴다. 보낸 기록은 1일 뒤 지운다
 
 ## 로컬 실행
 
 필요한 것: JDK 21, Docker, 실행 중인 user-service(8081)
 
 1. `~/.gradle/gradle.properties`에 `gpr.user`, `gpr.key`(read:packages 토큰)
-2. `docker compose up -d` — MySQL(`localhost:3309`), Kafka(`localhost:9092`)
+2. `docker compose up -d` — MySQL(`localhost:3309`), Kafka(`localhost:9092`), Mailpit(SMTP `1025`, 받은 메일 화면 http://localhost:8025)
 3. `./gradlew bootRun --args='--spring.profiles.active=local'`
 
 ## API
@@ -55,3 +55,9 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | |
 | `JWT_JWKS_URI` | `http://localhost:8081/.well-known/jwks.json` | access 토큰 검증 공개키 |
 | `USER_SERVICE_URL` | `http://localhost:8081` | 알림 문구의 사용자 이름·메일 주소 조회 (공통 모듈 `client-common`) |
+| `MAIL_HOST` / `MAIL_PORT` | `localhost` / `1025` | SMTP 서버 (Mailpit, 운영은 SES SMTP 엔드포인트·587) |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | (없음) | SMTP 인증 (SES SMTP 자격 증명) |
+| `MAIL_SMTP_AUTH` / `MAIL_SMTP_STARTTLS` | `false` / `false` | 운영(SES)은 둘 다 `true` |
+| `MAIL_FROM` | `no-reply@nineouting.local` | 보내는 주소 (SES에서 인증한 도메인) |
+| `MAIL_ENABLED` | `true` | `false`면 기록만 하고 보내지 않는다 |
+| `FRONTEND_BASE_URL` | `http://localhost:5173` | 메일 안 회의록 링크 |

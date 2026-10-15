@@ -19,6 +19,13 @@ services:
       interval: 5s
       retries: 10
 
+  mailpit:
+    # 개발용 메일 서버: 밖으로 보내지 않고 http://localhost:8025 받은편지함에서 보여 준다
+    image: axllent/mailpit:v1.31.3
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # 웹 화면
+
   kafka:
     image: apache/kafka:3.9.1   # KRaft 단일 브로커, localhost:9092
     ports:
