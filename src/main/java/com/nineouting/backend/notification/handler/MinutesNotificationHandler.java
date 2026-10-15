@@ -22,7 +22,7 @@ import tools.jackson.databind.json.JsonMapper;
  * 회의록 알림.
  * <ul>
  *   <li>검토 요청 (REQ-095): 검토할 참석자에게 알림</li>
- *   <li>확정 (REQ-100): 참석자 전원에게 알림 + 메일 기록. 실제 발송은 추후 개발 (docs/backlog.md "메일 실제 발송")</li>
+ *   <li>확정 (REQ-100): 참석자 전원에게 알림 + 메일 기록 (발송은 MailDeliveryJob)</li>
  * </ul>
  * user-service에 연결할 수 없으면 예외를 던져 inbox가 나중에 다시 처리한다. 탈퇴 등으로 없는 사용자는 메일을 건너뛴다.
  */

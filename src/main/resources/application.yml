@@ -14,6 +14,17 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate   # 스키마는 Flyway만 바꾼다
+  mail:
+    # 개발·통합 테스트: Mailpit(받은 메일을 http://localhost:8025 에서 확인), 운영: AWS SES SMTP (인증 정보는 환경 변수)
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -30,3 +41,10 @@ nineouting:
     user-service-url: ${USER_SERVICE_URL:http://localhost:8081}
   notification:
     retention: 90d
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    from: ${MAIL_FROM:no-reply@nineouting.local}
+    frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+    batch-size: 20
+    max-attempts: 10
+    sent-retention: 1d   # 보낸 메일 기록 (인증 코드가 들어 있어 짧게)
