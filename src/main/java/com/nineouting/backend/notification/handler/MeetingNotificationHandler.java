@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 회의 알림: 초대(REQ-058), 정보 변경(REQ-115), 취소(REQ-112). 회의를 만든 사람에게는 보내지 않는다.
+ * 회의 알림: 초대(REQ-058), 정보 변경(REQ-116), 취소(REQ-113). 회의를 만든 사람에게는 보내지 않는다.
  * 수정으로 새로 추가된 사람은 초대 알림, 나머지 참석자는 변경 알림을 받고, 빠진 사람은 받지 않는다.
  */
 @Component
