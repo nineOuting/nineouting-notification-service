@@ -7,7 +7,7 @@ spring:
   config:
     import: classpath:observability/defaults.yml
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3309/notification_db}
+    url: ${DB_URL:jdbc:postgresql://localhost:5435/notification_db}
     username: ${DB_USERNAME:notification_service}
     password: ${DB_PASSWORD:notification_service}
   jpa:

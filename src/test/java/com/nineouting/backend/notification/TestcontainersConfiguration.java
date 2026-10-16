@@ -13,11 +13,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.DynamicPropertyRegistrar;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.kafka.KafkaContainer;
-import org.testcontainers.mysql.MySQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * 테스트용 MySQL·Kafka·Mailpit(메일 서버), user-service 대신 토큰을 서명할 키.
+ * 테스트용 PostgreSQL·Kafka·Mailpit(메일 서버), user-service 대신 토큰을 서명할 키.
  */
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
@@ -27,8 +27,8 @@ public class TestcontainersConfiguration {
 
     @Bean
     @ServiceConnection
-    MySQLContainer mysqlContainer() {
-        return new MySQLContainer("mysql:8.4");
+    PostgreSQLContainer postgresContainer() {
+        return new PostgreSQLContainer("postgres:17.6-alpine");
     }
 
     @Bean

@@ -12,7 +12,7 @@
 필요한 것: JDK 21, Docker, 실행 중인 user-service(8081)
 
 1. `~/.gradle/gradle.properties`에 `gpr.user`, `gpr.key`(read:packages 토큰)
-2. `docker compose up -d` — MySQL(`localhost:3309`), Kafka(`localhost:9092`), Mailpit(SMTP `1025`, 받은 메일 화면 http://localhost:8025)
+2. `docker compose up -d` — PostgreSQL(`localhost:5435`), Kafka(`localhost:9092`), Mailpit(SMTP `1025`, 받은 메일 화면 http://localhost:8025)
 3. `./gradlew bootRun --args='--spring.profiles.active=local'`
 
 ## API
@@ -42,7 +42,7 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 ## 테스트
 
 ```bash
-./gradlew test   # Testcontainers로 MySQL·Kafka를 띄워 실제 토픽 → inbox → 알림 → SSE까지 확인한다
+./gradlew test   # Testcontainers로 PostgreSQL·Kafka를 띄워 실제 토픽 → inbox → 알림 → SSE까지 확인한다
 ```
 
 ## 환경 변수
@@ -50,7 +50,7 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 | 이름 | 기본값 | 설명 |
 |------|--------|------|
 | `SERVER_PORT` | `8085` | |
-| `DB_URL` | `jdbc:mysql://localhost:3309/notification_db` | |
+| `DB_URL` | `jdbc:postgresql://localhost:5435/notification_db` | |
 | `DB_USERNAME` / `DB_PASSWORD` | `notification_service` | |
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | |
 | `JWT_JWKS_URI` | `http://localhost:8081/.well-known/jwks.json` | access 토큰 검증 공개키 |
