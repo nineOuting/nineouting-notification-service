@@ -13,7 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  * 접속 중인 사용자의 SSE 연결을 들고 있다가 새 알림을 보낸다. 한 사용자가 여러 탭·기기로 접속할 수 있다.
- * 이 인스턴스에 연결된 사용자에게만 보낸다 — 여러 인스턴스로 늘릴 때는 docs/backlog.md "SSE 여러 인스턴스".
+ * 이 인스턴스에 연결된 사용자에게만 보낸다. 다른 인스턴스에 붙은 사용자에게는 SseFanout(Redis Pub/Sub)이 나눠 준다.
  */
 @Slf4j
 @Component
@@ -34,6 +34,15 @@ public class SseHub {
     }
 
     public void send(Long userId, String eventName, Object data) {
+        sendData(userId, eventName, data);
+    }
+
+    /** 이미 JSON으로 만든 문자열을 그대로 보낸다 (SseFanout이 다른 인스턴스에서 받은 알림) */
+    public void sendJson(Long userId, String eventName, String json) {
+        sendData(userId, eventName, json);
+    }
+
+    private void sendData(Long userId, String eventName, Object data) {
         for (SseEmitter emitter : emitters.getOrDefault(userId, Set.of())) {
             try {
                 emitter.send(SseEmitter.event().name(eventName).data(data, MediaType.APPLICATION_JSON));

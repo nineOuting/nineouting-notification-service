@@ -33,12 +33,14 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final SseHub sseHub;
+    private final SseFanout sseFanout;
     private final NotificationProperties properties;
     private final Clock clock;
 
     /**
      * 알림을 저장하고, 트랜잭션이 커밋된 뒤에 접속 중인 사용자에게 보낸다
-     * (처리가 실패해 되돌려진 알림을 미리 보내지 않기 위해).
+     * (처리가 실패해 되돌려진 알림을 미리 보내지 않기 위해). 사용자가 다른 인스턴스에 붙어 있을 수 있어
+     * Redis로 모든 인스턴스에 나눠 보낸다 (SseFanout).
      */
     @Transactional
     public void notify(Long userId, NotificationType type, String message, Long workspaceId, Long targetId) {
@@ -49,11 +51,11 @@ public class NotificationService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    sseHub.send(userId, EVENT_NOTIFICATION, response);
+                    sseFanout.publish(userId, EVENT_NOTIFICATION, response);
                 }
             });
         } else {
-            sseHub.send(userId, EVENT_NOTIFICATION, response);
+            sseFanout.publish(userId, EVENT_NOTIFICATION, response);
         }
     }
 

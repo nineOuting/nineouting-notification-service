@@ -17,7 +17,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * 테스트용 PostgreSQL·Kafka·Mailpit(메일 서버), user-service 대신 토큰을 서명할 키.
+ * 테스트용 PostgreSQL·Kafka·Redis·Mailpit(메일 서버), user-service 대신 토큰을 서명할 키.
  */
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
@@ -35,6 +35,13 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     KafkaContainer kafkaContainer() {
         return new KafkaContainer(DockerImageName.parse("apache/kafka:3.9.1"));
+    }
+
+    /** SSE 알림을 인스턴스끼리 나눠 보내는 Pub/Sub */
+    @Bean
+    @ServiceConnection(name = "redis")
+    GenericContainer<?> redisContainer() {
+        return new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(6379);
     }
 
     /** 받은 메일을 API(/api/v1/...)로 확인할 수 있는 개발용 메일 서버 */
