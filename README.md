@@ -12,7 +12,7 @@
 필요한 것: JDK 21, Docker, 실행 중인 user-service(8081)
 
 1. `~/.gradle/gradle.properties`에 `gpr.user`, `gpr.key`(read:packages 토큰)
-2. `docker compose up -d` — PostgreSQL(`localhost:5435`), Kafka(`localhost:9092`), Mailpit(SMTP `1025`, 받은 메일 화면 http://localhost:8025)
+2. `docker compose up -d` — PostgreSQL(`localhost:5435`), Kafka(`localhost:9092`), Redis(`localhost:6379`), Mailpit(SMTP `1025`, 받은 메일 화면 http://localhost:8025)
 3. `./gradlew bootRun --args='--spring.profiles.active=local'`
 
 ## API
@@ -51,6 +51,7 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 |------|--------|------|
 | `SERVER_PORT` | `8085` | |
 | `DB_URL` | `jdbc:postgresql://localhost:5435/notification_db` | |
+| `REDIS_HOST` / `REDIS_PORT` | `localhost` / `6379` | SSE 알림을 여러 인스턴스에 나눠 보내는 Pub/Sub |
 | `DB_USERNAME` / `DB_PASSWORD` | `notification_service` | |
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | |
 | `JWT_JWKS_URI` | `http://localhost:8081/.well-known/jwks.json` | access 토큰 검증 공개키 |
