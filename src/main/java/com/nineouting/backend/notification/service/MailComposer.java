@@ -39,14 +39,14 @@ public class MailComposer {
                         """.formatted(params.get("code")));
             }
             case PASSWORD_RESET -> {
-                message.setSubject(PREFIX + "비밀번호 재설정");
+                message.setSubject(PREFIX + "비밀번호 찾기 인증 번호");
                 message.setText("""
-                        아래 링크에서 새 비밀번호를 설정해 주세요.
+                        비밀번호 찾기 화면에 아래 인증 번호를 입력해 주세요.
 
-                        %s
+                        인증 번호: %s
 
-                        링크는 30분 동안 쓸 수 있습니다. 직접 요청하지 않았다면 이 메일을 무시해 주세요.
-                        """.formatted(params.get("resetLink")));
+                        인증 번호는 5분 동안 쓸 수 있습니다. 직접 요청하지 않았다면 이 메일을 무시해 주세요.
+                        """.formatted(params.get("code")));
             }
             case MINUTES_CONFIRMED -> {
                 message.setSubject(PREFIX + "'%s' 회의록이 확정되었습니다".formatted(params.get("title")));

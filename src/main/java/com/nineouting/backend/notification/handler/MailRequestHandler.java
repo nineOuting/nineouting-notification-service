@@ -37,7 +37,7 @@ public class MailRequestHandler implements InboxHandler {
             record(event.email(), MailKind.EMAIL_VERIFICATION, Map.of("code", event.code()));
         } else {
             PasswordResetRequested event = message.payload(jsonMapper, PasswordResetRequested.class);
-            record(event.email(), MailKind.PASSWORD_RESET, Map.of("resetLink", event.resetLink()));
+            record(event.email(), MailKind.PASSWORD_RESET, Map.of("code", event.code()));
         }
     }
 

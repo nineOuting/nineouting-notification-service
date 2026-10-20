@@ -31,12 +31,11 @@ class MailComposerTest {
     }
 
     @Test
-    void 비밀번호_재설정_메일은_링크를_그대로_넣는다() {
-        SimpleMailMessage message = compose(MailKind.PASSWORD_RESET,
-                "{\"resetLink\":\"https://app.nineouting.test/reset?token=abc\"}");
+    void 비밀번호_찾기_메일은_인증_번호를_넣는다() {
+        SimpleMailMessage message = compose(MailKind.PASSWORD_RESET, "{\"code\":\"654321\"}");
 
-        assertThat(message.getSubject()).isEqualTo("[AI 회의 어시스턴트] 비밀번호 재설정");
-        assertThat(message.getText()).contains("https://app.nineouting.test/reset?token=abc").contains("30분");
+        assertThat(message.getSubject()).isEqualTo("[AI 회의 어시스턴트] 비밀번호 찾기 인증 번호");
+        assertThat(message.getText()).contains("인증 번호: 654321").contains("5분");
     }
 
     @Test

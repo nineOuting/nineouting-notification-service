@@ -164,12 +164,12 @@ class NotificationFlowTest {
         String email = "mail-" + NEXT_ID.incrementAndGet() + "@example.com";
 
         publish(EmailVerificationRequested.TOPIC, EmailVerificationRequested.TYPE, new EmailVerificationRequested(email, "123456"));
-        publish(PasswordResetRequested.TOPIC, PasswordResetRequested.TYPE, new PasswordResetRequested(email, "http://front/reset?token=t"));
+        publish(PasswordResetRequested.TOPIC, PasswordResetRequested.TYPE, new PasswordResetRequested(email, "654321"));
 
         await(() -> mailpit.textsTo(email).size() == 2);
         assertThat(mailpit.textsTo(email))
                 .anySatisfy(text -> assertThat(text).contains("인증 코드: 123456"))
-                .anySatisfy(text -> assertThat(text).contains("http://front/reset?token=t"));
+                .anySatisfy(text -> assertThat(text).contains("인증 번호: 654321"));
         await(() -> outgoingMailRepository.findAll().stream()
                 .filter(mail -> mail.getToEmail().equals(email))
                 .allMatch(mail -> OutgoingMail.STATUS_SENT.equals(mail.getStatus())));
