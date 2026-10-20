@@ -37,7 +37,7 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 | `minutes.review-requested` | 검토할 참석자에게 검토 요청 알림 |
 | `minutes.confirmed` | 참석자 전원에게 확정 알림 + 보낼 메일 기록 |
 | `user.email-verification-requested` | 보낼 메일 기록 (인증 코드) |
-| `user.password-reset-requested` | 보낼 메일 기록 (재설정 링크) |
+| `user.password-reset-requested` | 보낼 메일 기록 (비밀번호 찾기 인증 번호) |
 
 ## 테스트
 
