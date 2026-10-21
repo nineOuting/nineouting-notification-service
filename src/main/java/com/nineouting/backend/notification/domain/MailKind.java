@@ -5,6 +5,6 @@ public enum MailKind {
     EMAIL_VERIFICATION,
     /** 비밀번호 찾기 인증 번호 (REQ-009) */
     PASSWORD_RESET,
-    /** 회의록 확정 공유 (REQ-100) */
+    /** 회의록 확정 공유 (REQ-112) */
     MINUTES_CONFIRMED
 }

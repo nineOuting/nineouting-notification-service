@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 쌓인 메일(outgoing_mails)을 SMTP로 보낸다 (REQ-009, 011, 100).
+ * 쌓인 메일(outgoing_mails)을 SMTP로 보낸다 (REQ-009, 011, 112).
  * 꺼낸 메일은 잠가 두므로 서비스를 여러 개 띄워도 같은 메일을 두 번 보내지 않는다.
  */
 @Slf4j
