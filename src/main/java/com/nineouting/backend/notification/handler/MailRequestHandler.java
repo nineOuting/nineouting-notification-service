@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * REQ-009·011: 메일 발송 요청을 기록한다. 실제 발송은 MailDeliveryJob이 한다.
+ * REQ-009, 011: 메일 발송 요청을 기록한다. 실제 발송은 MailDeliveryJob이 한다.
  */
 @Component
 @RequiredArgsConstructor
