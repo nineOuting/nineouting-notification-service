@@ -22,6 +22,7 @@ import com.nineouting.backend.common.event.minutes.MinutesEdited;
 import com.nineouting.backend.common.event.minutes.MinutesReviewRequested;
 import com.nineouting.backend.common.event.user.EmailVerificationRequested;
 import com.nineouting.backend.common.event.user.PasswordResetRequested;
+import com.nineouting.backend.common.event.workspace.MemberInvitedByEmail;
 import com.nineouting.backend.common.event.workspace.MemberJoinApproved;
 import com.nineouting.backend.common.event.workspace.MemberJoinRequested;
 import com.nineouting.backend.notification.domain.MailKind;
@@ -177,6 +178,19 @@ class NotificationFlowTest {
         assertThat(outgoingMailRepository.findAll()).filteredOn(mail -> mail.getToEmail().equals(email))
                 .extracting("kind")
                 .containsExactlyInAnyOrder(MailKind.EMAIL_VERIFICATION, MailKind.PASSWORD_RESET);
+    }
+
+    @Test
+    void 이메일_초대는_초대_링크가_담긴_메일로_보낸다() throws Exception {
+        String email = "invite-" + NEXT_ID.incrementAndGet() + "@example.com";
+
+        publish(MemberInvitedByEmail.TOPIC, MemberInvitedByEmail.TYPE, new MemberInvitedByEmail(3L, "기획팀", email,
+                "token-abc", 7L, LocalDateTime.of(2026, 10, 27, 9, 30)));
+
+        await(() -> mailpit.subjectsTo(email).contains("[AI 회의 어시스턴트] '기획팀' 워크스페이스에 초대되었습니다"));
+        assertThat(mailpit.textsTo(email)).anySatisfy(text -> assertThat(text)
+                .contains("/invitations/token-abc")
+                .contains("10월 27일 09:30까지"));
     }
 
     @Test

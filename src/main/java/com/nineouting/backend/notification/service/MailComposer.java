@@ -57,6 +57,18 @@ public class MailComposer {
                         바로가기: %s/minutes/%s
                         """.formatted(params.get("title"), properties.frontendBaseUrl(), params.get("minutesId")));
             }
+            case WORKSPACE_INVITED -> {
+                message.setSubject(PREFIX + "'%s' 워크스페이스에 초대되었습니다".formatted(params.get("workspaceName")));
+                message.setText("""
+                        '%s' 워크스페이스에 초대되었습니다. 아래 링크에서 참여할 수 있습니다.
+
+                        참여하기: %s/invitations/%s
+
+                        이 메일 주소로 가입한 계정으로 로그인해야 하며, 아직 가입하지 않았다면 링크에서 회원가입 후 참여할 수 있습니다.
+                        링크는 %s까지 쓸 수 있습니다.
+                        """.formatted(params.get("workspaceName"), properties.frontendBaseUrl(), params.get("token"),
+                        params.get("expiresAt")));
+            }
         }
         return message;
     }
