@@ -3,6 +3,7 @@ package com.nineouting.backend.notification.handler;
 import com.nineouting.backend.common.client.UserClient;
 import com.nineouting.backend.common.client.UserSummary;
 import com.nineouting.backend.common.event.minutes.MinutesConfirmed;
+import com.nineouting.backend.common.event.minutes.MinutesEdited;
 import com.nineouting.backend.common.event.minutes.MinutesReviewRequested;
 import com.nineouting.backend.common.inbox.InboxHandler;
 import com.nineouting.backend.common.inbox.InboxMessage;
@@ -22,7 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
  * 회의록 알림.
  * <ul>
  *   <li>검토 요청 (REQ-106): 검토할 참석자에게 알림</li>
- *   <li>확정 (REQ-112): 참석자 전원에게 알림 + 메일 기록 (발송은 MailDeliveryJob)</li>
+ *   <li>확정 (REQ-112, 레거시): 참석자 전원에게 알림 + 메일 기록 (발송은 MailDeliveryJob)</li>
  * </ul>
  * user-service에 연결할 수 없으면 예외를 던져 inbox가 나중에 다시 처리한다. 탈퇴 등으로 없는 사용자는 메일을 건너뛴다.
  */
@@ -38,7 +39,8 @@ public class MinutesNotificationHandler implements InboxHandler {
 
     @Override
     public boolean supports(String eventType) {
-        return MinutesReviewRequested.TYPE.equals(eventType) || MinutesConfirmed.TYPE.equals(eventType);
+        return MinutesReviewRequested.TYPE.equals(eventType) || MinutesConfirmed.TYPE.equals(eventType)
+                || MinutesEdited.TYPE.equals(eventType);
     }
 
     @Override
@@ -48,6 +50,14 @@ public class MinutesNotificationHandler implements InboxHandler {
             event.reviewerUserIds().forEach(userId -> notificationService.notify(userId,
                     NotificationType.MINUTES_REVIEW_REQUESTED, "'%s' 회의록 검토를 요청받았습니다".formatted(event.title()),
                     event.workspaceId(), event.minutesId()));
+            return;
+        }
+        if (MinutesEdited.TYPE.equals(message.eventType())) {
+            MinutesEdited event = message.payload(jsonMapper, MinutesEdited.class);
+            event.attendeeUserIds().stream()
+                    .filter(userId -> !userId.equals(event.editorUserId()))
+                    .forEach(userId -> notificationService.notify(userId, NotificationType.MINUTES_EDITED,
+                            "'%s' 회의록이 수정되었습니다".formatted(event.title()), event.workspaceId(), event.minutesId()));
             return;
         }
         MinutesConfirmed event = message.payload(jsonMapper, MinutesConfirmed.class);
