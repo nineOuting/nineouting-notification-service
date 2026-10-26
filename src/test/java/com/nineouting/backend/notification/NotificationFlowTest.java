@@ -18,6 +18,7 @@ import com.nineouting.backend.common.event.meeting.MeetingCancelled;
 import com.nineouting.backend.common.event.meeting.MeetingCreated;
 import com.nineouting.backend.common.event.meeting.MeetingUpdated;
 import com.nineouting.backend.common.event.minutes.MinutesConfirmed;
+import com.nineouting.backend.common.event.minutes.MinutesEdited;
 import com.nineouting.backend.common.event.minutes.MinutesReviewRequested;
 import com.nineouting.backend.common.event.user.EmailVerificationRequested;
 import com.nineouting.backend.common.event.user.PasswordResetRequested;
@@ -227,6 +228,22 @@ class NotificationFlowTest {
                 .contains("user" + writer + "@example.com", "user" + reviewer + "@example.com");
         await(() -> mailpit.subjectsTo("user" + reviewer + "@example.com").contains("[AI 회의 어시스턴트] '주간 회의' 회의록이 확정되었습니다"));
         assertThat(mailpit.textsTo("user" + reviewer + "@example.com")).anySatisfy(text -> assertThat(text).contains("/minutes/41"));
+    }
+
+    @Test
+    void 확정된_회의록을_고치면_고친_사람을_뺀_참석자에게_알린다() throws Exception {
+        Long writer = NEXT_ID.incrementAndGet();
+        Long attendee = NEXT_ID.incrementAndGet();
+
+        publish(MinutesEdited.TOPIC, MinutesEdited.TYPE,
+                new MinutesEdited(42L, 32L, 3L, 4L, "주간 회의", writer, List.of(writer, attendee), LocalDateTime.now()));
+
+        await(() -> unreadCount(attendee) == 1);
+        call(attendee, get("/api/notifications"))
+                .andExpect(jsonPath("$.data.items[0].type").value("MINUTES_EDITED"))
+                .andExpect(jsonPath("$.data.items[0].message").value("'주간 회의' 회의록이 수정되었습니다"))
+                .andExpect(jsonPath("$.data.items[0].targetId").value(42));
+        assertThat(unreadCount(writer)).isZero();
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.nineouting.backend.notification.handler;
 import com.nineouting.backend.common.client.UserClient;
 import com.nineouting.backend.common.client.UserSummary;
 import com.nineouting.backend.common.event.minutes.MinutesConfirmed;
+import com.nineouting.backend.common.event.minutes.MinutesEdited;
 import com.nineouting.backend.common.event.minutes.MinutesReviewRequested;
 import com.nineouting.backend.common.inbox.InboxHandler;
 import com.nineouting.backend.common.inbox.InboxMessage;
@@ -38,7 +39,8 @@ public class MinutesNotificationHandler implements InboxHandler {
 
     @Override
     public boolean supports(String eventType) {
-        return MinutesReviewRequested.TYPE.equals(eventType) || MinutesConfirmed.TYPE.equals(eventType);
+        return MinutesReviewRequested.TYPE.equals(eventType) || MinutesConfirmed.TYPE.equals(eventType)
+                || MinutesEdited.TYPE.equals(eventType);
     }
 
     @Override
@@ -48,6 +50,14 @@ public class MinutesNotificationHandler implements InboxHandler {
             event.reviewerUserIds().forEach(userId -> notificationService.notify(userId,
                     NotificationType.MINUTES_REVIEW_REQUESTED, "'%s' 회의록 검토를 요청받았습니다".formatted(event.title()),
                     event.workspaceId(), event.minutesId()));
+            return;
+        }
+        if (MinutesEdited.TYPE.equals(message.eventType())) {
+            MinutesEdited event = message.payload(jsonMapper, MinutesEdited.class);
+            event.attendeeUserIds().stream()
+                    .filter(userId -> !userId.equals(event.editorUserId()))
+                    .forEach(userId -> notificationService.notify(userId, NotificationType.MINUTES_EDITED,
+                            "'%s' 회의록이 수정되었습니다".formatted(event.title()), event.workspaceId(), event.minutesId()));
             return;
         }
         MinutesConfirmed event = message.payload(jsonMapper, MinutesConfirmed.class);
