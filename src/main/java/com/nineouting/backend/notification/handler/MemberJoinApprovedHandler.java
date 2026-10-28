@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
-/** REQ-035: 요청자에게 참여 승인 알림 */
+/** REQ-035 (레거시): 요청자에게 참여 승인 알림 */
 @Component
 @RequiredArgsConstructor
 public class MemberJoinApprovedHandler implements InboxHandler {
