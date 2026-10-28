@@ -19,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -36,7 +35,7 @@ class SseStreamTest {
     Environment environment;
 
     @Autowired
-    KafkaTemplate<String, String> kafkaTemplate;
+    LocalMessaging messaging;
 
     @Autowired
     JsonMapper jsonMapper;
@@ -63,8 +62,8 @@ class SseStreamTest {
 
         awaitLine(lines, "event:connected");
 
-        kafkaTemplate.send(MemberJoinApproved.TOPIC, jsonMapper.writeValueAsString(EventEnvelope.of(
-                MemberJoinApproved.TYPE, "test", null, new MemberJoinApproved(3L, "실시간", user)))).get();
+        messaging.publish(MemberJoinApproved.TOPIC, null, jsonMapper.writeValueAsString(EventEnvelope.of(
+                MemberJoinApproved.TYPE, "test", null, new MemberJoinApproved(3L, "실시간", user))));
 
         awaitLine(lines, "event:notification");
         assertThat(lines).anyMatch(line -> line.startsWith("data:") && line.contains("'실시간' 워크스페이스 참여가 승인되었습니다"));

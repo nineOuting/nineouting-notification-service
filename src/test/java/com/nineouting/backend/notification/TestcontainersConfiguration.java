@@ -1,5 +1,16 @@
 package com.nineouting.backend.notification;
 
+import com.nineouting.backend.common.event.meeting.MeetingCancelled;
+import com.nineouting.backend.common.event.meeting.MeetingCreated;
+import com.nineouting.backend.common.event.meeting.MeetingUpdated;
+import com.nineouting.backend.common.event.minutes.MinutesConfirmed;
+import com.nineouting.backend.common.event.minutes.MinutesEdited;
+import com.nineouting.backend.common.event.minutes.MinutesReviewRequested;
+import com.nineouting.backend.common.event.user.EmailVerificationRequested;
+import com.nineouting.backend.common.event.user.PasswordResetRequested;
+import com.nineouting.backend.common.event.workspace.MemberInvitedByEmail;
+import com.nineouting.backend.common.event.workspace.MemberJoinApproved;
+import com.nineouting.backend.common.event.workspace.MemberJoinRequested;
 import com.nineouting.backend.common.security.jwt.JwksKeyLocator;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Jwks;
@@ -7,17 +18,23 @@ import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.DynamicPropertyRegistrar;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.localstack.LocalStackContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sqs.SqsClient;
 
 /**
- * 테스트용 PostgreSQL·Kafka·Redis·Mailpit(메일 서버), user-service 대신 토큰을 서명할 키.
+ * 테스트용 PostgreSQL·LocalStack(SNS·SQS)·Redis·Mailpit(메일 서버), user-service 대신 토큰을 서명할 키.
  */
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
@@ -29,12 +46,6 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     PostgreSQLContainer postgresContainer() {
         return new PostgreSQLContainer("postgres:17.6-alpine");
-    }
-
-    @Bean
-    @ServiceConnection
-    KafkaContainer kafkaContainer() {
-        return new KafkaContainer(DockerImageName.parse("apache/kafka:3.9.1"));
     }
 
     /** SSE 알림을 인스턴스끼리 나눠 보내는 Pub/Sub */
@@ -58,6 +69,52 @@ public class TestcontainersConfiguration {
             registry.add("test.mailpit.api", () -> "http://" + mailpitContainer.getHost() + ":" + mailpitContainer.getMappedPort(8025));
             registry.add("nineouting.mail.send-interval", () -> "500ms");
         };
+    }
+
+    @Bean
+    LocalStackContainer localStackContainer() {
+        return new LocalStackContainer(DockerImageName.parse("localstack/localstack:4.4")).withServices("sns", "sqs");
+    }
+
+    @Bean
+    SnsClient snsClient(LocalStackContainer localStack) {
+        return SnsClient.builder().endpointOverride(localStack.getEndpoint()).region(Region.of(localStack.getRegion()))
+                .credentialsProvider(credentials(localStack)).build();
+    }
+
+    @Bean
+    SqsClient sqsClient(LocalStackContainer localStack) {
+        return SqsClient.builder().endpointOverride(localStack.getEndpoint()).region(Region.of(localStack.getRegion()))
+                .credentialsProvider(credentials(localStack)).build();
+    }
+
+    @Bean
+    LocalMessaging localMessaging(SnsClient snsClient, SqsClient sqsClient) {
+        return new LocalMessaging(snsClient, sqsClient);
+    }
+
+    /** 이 서비스 큐를 만들어 받는 토픽에 구독시키고 inbox에 큐 주소를 알려 준다 (운영은 Terraform) */
+    @Bean
+    DynamicPropertyRegistrar messagingProperties(LocalMessaging messaging) {
+        return registry -> {
+            String queueUrl = messaging.queue("notification-service", List.of(
+                    EmailVerificationRequested.TOPIC,
+                    PasswordResetRequested.TOPIC,
+                    MemberJoinRequested.TOPIC,
+                    MemberJoinApproved.TOPIC,
+                    MemberInvitedByEmail.TOPIC,
+                    MeetingCreated.TOPIC,
+                    MeetingUpdated.TOPIC,
+                    MeetingCancelled.TOPIC,
+                    MinutesReviewRequested.TOPIC,
+                    MinutesConfirmed.TOPIC,
+                    MinutesEdited.TOPIC));
+            registry.add("nineouting.inbox.queue", () -> queueUrl);
+        };
+    }
+
+    private static StaticCredentialsProvider credentials(LocalStackContainer localStack) {
+        return StaticCredentialsProvider.create(AwsBasicCredentials.create(localStack.getAccessKey(), localStack.getSecretKey()));
     }
 
     /** security-common이 user-service JWKS 대신 테스트 공개키로 검증하게 한다. */
