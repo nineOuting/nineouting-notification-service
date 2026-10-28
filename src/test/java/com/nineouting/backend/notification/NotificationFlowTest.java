@@ -42,7 +42,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -50,7 +49,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 실제 Kafka 토픽에 이벤트를 넣고 inbox → 처리기 → 알림 API까지 확인한다.
+ * 실제 SNS 토픽에 이벤트를 넣고 inbox → 처리기 → 알림 API까지 확인한다.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -64,7 +63,7 @@ class NotificationFlowTest {
     MockMvc mockMvc;
 
     @Autowired
-    KafkaTemplate<String, String> kafkaTemplate;
+    LocalMessaging messaging;
 
     @Autowired
     JsonMapper jsonMapper;
@@ -114,8 +113,8 @@ class NotificationFlowTest {
         Long user = NEXT_ID.incrementAndGet();
         String envelope = envelope(MemberJoinApproved.TYPE, new MemberJoinApproved(11L, "스터디", user));
 
-        kafkaTemplate.send(MemberJoinApproved.TOPIC, "11", envelope).get();
-        kafkaTemplate.send(MemberJoinApproved.TOPIC, "11", envelope).get();
+        messaging.publish(MemberJoinApproved.TOPIC, "11", envelope);
+        messaging.publish(MemberJoinApproved.TOPIC, "11", envelope);
         // 다른 이벤트가 처리될 때까지 기다리면 앞의 두 메시지도 처리가 끝난 것이다
         publish(MemberJoinApproved.TOPIC, MemberJoinApproved.TYPE, new MemberJoinApproved(12L, "다른 곳", user));
 
@@ -266,7 +265,7 @@ class NotificationFlowTest {
     }
 
     private void publish(String topic, String type, Object payload) throws Exception {
-        kafkaTemplate.send(topic, envelope(type, payload)).get();
+        messaging.publish(topic, null, envelope(type, payload));
     }
 
     private String envelope(String type, Object payload) {

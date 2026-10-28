@@ -12,7 +12,7 @@
 필요한 것: JDK 21, Docker, 실행 중인 user-service(8081)
 
 1. `~/.gradle/gradle.properties`에 `gpr.user`, `gpr.key`(read:packages 토큰)
-2. `docker compose up -d` — PostgreSQL(`localhost:5435`), Kafka(`localhost:9092`), Redis(`localhost:6379`), Mailpit(SMTP `1025`, 받은 메일 화면 http://localhost:8025)
+2. `docker compose up -d` — PostgreSQL(`localhost:5435`), LocalStack SNS·SQS(`localhost:4566`, 토픽·큐는 `docker/localstack/init-sns-sqs.sh`), Redis(`localhost:6379`), Mailpit(SMTP `1025`, 받은 메일 화면 http://localhost:8025)
 3. `./gradlew bootRun --args='--spring.profiles.active=local'`
 
 ## API
@@ -42,7 +42,7 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 ## 테스트
 
 ```bash
-./gradlew test   # Testcontainers로 PostgreSQL·Kafka를 띄워 실제 토픽 → inbox → 알림 → SSE까지 확인한다
+./gradlew test   # Testcontainers로 PostgreSQL·LocalStack(SNS·SQS)을 띄워 실제 토픽 → 큐 → inbox → 알림 → SSE까지 확인한다
 ```
 
 ## 환경 변수
@@ -53,7 +53,9 @@ SSE는 `Authorization` 헤더가 필요하므로 프론트는 fetch 기반 SSE�
 | `DB_URL` | `jdbc:postgresql://localhost:5435/notification_db` | |
 | `REDIS_HOST` / `REDIS_PORT` | `localhost` / `6379` | SSE 알림을 여러 인스턴스에 나눠 보내는 Pub/Sub |
 | `DB_USERNAME` / `DB_PASSWORD` | `notification_service` | |
-| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | |
+| `SQS_QUEUE_URL` | `http://localhost:4566/000000000000/nineouting-local-notification-service.fifo` | 이 서비스가 이벤트를 받는 큐 |
+| `AWS_ENDPOINT_URL` | — | 비우면 AWS. LocalStack이면 `http://localhost:4566` (`local` 프로필은 자동) |
+| `MESSAGING_ACCESS_KEY` / `MESSAGING_SECRET_KEY` | — | 비우면 AWS 기본 자격 증명(EKS는 IRSA). LocalStack은 `test` (`local` 프로필은 자동) |
 | `JWT_JWKS_URI` | `http://localhost:8081/.well-known/jwks.json` | access 토큰 검증 공개키 |
 | `USER_SERVICE_URL` | `http://localhost:8081` | 알림 문구의 사용자 이름·메일 주소 조회 (공통 모듈 `client-common`) |
 | `MAIL_HOST` / `MAIL_PORT` | `localhost` / `1025` | SMTP 서버 (Mailpit, 운영은 SES SMTP 엔드포인트·587) |
