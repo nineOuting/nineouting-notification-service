@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
-/** REQ-016: 관리자에게 참여 요청 알림 */
+/** REQ-016 (레거시): 관리자에게 참여 요청 알림 */
 @Component
 @RequiredArgsConstructor
 public class MemberJoinRequestedHandler implements InboxHandler {
