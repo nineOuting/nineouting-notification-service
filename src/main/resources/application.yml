@@ -50,7 +50,7 @@ nineouting:
   clients:
     user-service-url: ${USER_SERVICE_URL:http://localhost:8081}
   notification:
-    retention: 90d
+    retention: 14d   # 알림 보관 기간. 지나면 매일 새벽 지운다 (QA 2026-11-23: 14일)
   mail:
     enabled: ${MAIL_ENABLED:true}
     from: ${MAIL_FROM:no-reply@nineouting.local}

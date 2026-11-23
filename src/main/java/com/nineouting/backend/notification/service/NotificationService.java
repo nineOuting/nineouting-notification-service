@@ -94,7 +94,7 @@ public class NotificationService {
         notificationRepository.markAllRead(userId, now());
     }
 
-    /** 보관 기간(90일)이 지난 알림을 지운다. */
+    /** 보관 기간(14일)이 지난 알림을 지운다. */
     @Scheduled(cron = "${nineouting.notification.cleanup-cron:0 0 5 * * *}")
     @Transactional
     public void deleteOld() {
